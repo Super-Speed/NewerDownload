@@ -19,11 +19,20 @@ namespace NewerDownload
         public NSMBWii_Installer_Blarg()
         {
             InitializeComponent();
+            //I'll clean up the code later in dev.
         }
+
+        //All of our strings will go here.
         int count;
+        string fileName;
+        string destFile;
+        string fileName2;
+        string destFile2;
+        //No string should pass this comment. >.<
 
         private void button1_Click(object sender, EventArgs e)
         {
+            //If the user hasn't selected a drive, just set it to C:\, the default drive.
             if (comboBox1.Text == "")
             {
                 MessageBox.Show("ERROR! Drive has not been selected!", "NewerInstall");
@@ -36,10 +45,13 @@ namespace NewerDownload
                 // Starts the download
                 client.DownloadFileAsync(new Uri("http://newerteam.com/getNewerFile.php"), "NewerNSMBW.zip");
 
+                //We want to disable the controls, as users shouldn't press the button more than once, it'll overload the program and destroy the world.
                 button1.Text = "Download In Process";
                 button1.Enabled = false;
             
         }
+
+        //This code is to record the progress of the download in the ProgressBar.
         void client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
         {
             double bytesIn = double.Parse(e.BytesReceived.ToString());
@@ -48,29 +60,47 @@ namespace NewerDownload
 
             progressBar1.Value = int.Parse(Math.Truncate(percentage).ToString());
         }
+
         void client_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
             //Display a messagebox once the download is complete.
             MessageBox.Show("Download Completed! Now extracting NewerNSMBWii!","NewerInstaller");
 
+            //We can now renable the Button, and change the text.
             button1.Text = "Download!";
             button1.Enabled = true;
 
+            //Using Ionic.dll, extract the downloaded NewerNSMBW.zip
             using (ZipFile zip = ZipFile.Read("NewerNSMBW.zip"))
             {
-                foreach (ZipEntry h in zip)
-                {
-                    h.Extract("");
-                    //This forwards us to the next section of code.
-                    Blarginator();
-                }
+                zip.ExtractAll("NSMB", ExtractExistingFileAction.DoNotOverwrite);
+                //This forwards us to the next code block, Blarginator.
+                Blarginator();
             }
         }
+
+        //This code is to copy the extracted folders to the SD Card\USB Drive. Then it deletes the Newer.zip.
         void Blarginator()
         {
-            Directory.Move("NewerSMBW", comboBox1.Text);
-            Directory.Move("riivolution", comboBox1.Text);
-            File.Delete("NewerNSMBW.zip");
+                string[] files = System.IO.Directory.GetFiles("NSMB\\NewerSMBW");
+                string[] files2 = System.IO.Directory.GetFiles("NSMB\\riivolution");
+                // Copy the files and overwrite destination files if they already exist.
+                foreach (string s in files)
+                {
+
+                    fileName = System.IO.Path.GetFileName(s);
+                    destFile = System.IO.Path.Combine(comboBox1.Text, fileName);
+                    System.IO.File.Copy(s, destFile, true);
+                }
+
+                foreach (string sr in files2)
+                {
+
+                    fileName2 = System.IO.Path.GetFileName(sr);
+                    destFile2 = System.IO.Path.Combine(comboBox1.Text, fileName2);
+                    System.IO.File.Copy(sr, destFile2, true);
+                }
+
         }
 
         //Using System.Media, we are able to play .WAV files, if they are named 1.wav, 2.wav, etc.
